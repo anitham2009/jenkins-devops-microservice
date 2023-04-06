@@ -38,7 +38,31 @@ pipeline {
 				//echo "Integration Test"
 			}
 		}
+		stage('Package') {
+			steps {
+				sh 'mvn package -DskipTests'
+			}
+		}
 
+		stage('Build Docker Image') {
+			steps {
+				//"docker build -t anithait/curreny-exchange-devops:$env.BUILD_TAG"
+				script {
+					dockerImage =  docker.build("anithait/curreny-exchange-devops:${env.BUILD_TAG}")
+				}
+			}
+		}
+		stage('Push Docker Image') {
+			steps {
+				script {
+					docker.withRegistry('','dockerhub') { // first paramter pushes to dockerhub by default, second param docker id register in jenkins
+						dockerImage.push();
+						dockerImage.push('latest'); //with latest tag
+					}
+					
+				}
+			}
+		}
 	} 
 	post {
 		always {
